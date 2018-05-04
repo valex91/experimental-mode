@@ -15,6 +15,18 @@
     return url && isExperimentalUrl(url);
   };
 
+  let isQueryUrl = (url) => {
+    return url.indexOf('?') > -1;
+  };
+
+  let hasMultipleQueries = (url) => {
+    return url.indexOf('&') > -1;
+  };
+
+  let hasOtherQueries = (url) => {
+    return url.indexOf('=') > -1;
+  };
+
   let styleButton = (state) => {
     state ? actionButton.classList.add('active') : actionButton.classList.remove('active');
   };
@@ -24,15 +36,37 @@
   };
 
   let removeExp = (tab) => {
-    chrome.tabs.update(tab.id, { url: `${tab.url.replace(experimental_regex, '')}` }, (updatedTab) => {
+    chrome.tabs.update(tab.id, { url: removeExperimentalFromUrl(tab.url) }, (updatedTab) => {
       styleButton(isExperimental(updatedTab.url));
     });
 
   };
   let activateExperimental = (tab) => {
-    chrome.tabs.update(tab.id, { url: `${tab.url}?experimental=true` }, (updatedTab) => {
+    chrome.tabs.update(tab.id, { url: createExperimentalUrl(tab.url) }, (updatedTab) => {
       styleButton(isExperimental(updatedTab.url));
     });
+  };
+
+  let createExperimentalUrl = (url) => {
+    let newUrl;
+    if (isQueryUrl(url)) {
+      newUrl = url.replace('?', '?experimental=true&')
+    } else {
+      newUrl = `${url}?experimental=true`
+    }
+
+    return newUrl;
+  };
+
+  let removeExperimentalFromUrl = (url) => {
+    let newUrl;
+    if (hasMultipleQueries(url)) {
+      newUrl = url.replace(/(experimental=true&)/gi, '');
+    } else {
+      newUrl = url.replace(/(\?experimental=true)/gi, '');
+    }
+
+    return newUrl;
   };
 
   actionButton.addEventListener('click', () => {
